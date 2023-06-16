@@ -32,57 +32,55 @@ private:
     map<string,set<string>> _graph;
 };
 
-CDelivery & CDelivery::addConn ( const string & from, const string & to )
-{
+CDelivery & CDelivery::addConn ( const string & from, const string & to ){
     _graph[from].insert(to);
     return *this;
 }
 
 map<string, list<string>> CDelivery::serveCustomers ( const set<string> & customers, const set<string> & depots ) const
 {
+    queue<string> q;
+    map<string,string> prev;
     map<string,list<string>> res;
 
-    queue<string> q;
-    set<string> visited;
-    map<string,string> previous;
-
-    for(const auto &depot  : depots){
+    for(const auto &depot : depots){
         q.push(depot);
-        visited.insert(depot);
-        previous[depot] = depot;
+        prev[depot] = depot;
     }
+
     while(!q.empty()){
-        auto v = q.front();
+        auto current = q.front();
         q.pop();
-        for(const auto &w : _graph.at(v)){
-            if(visited.count(w) == 0){
-                visited.insert(w);
-                previous[w] = v;
-                q.push(w);
+        if(_graph.count(current) == 0){
+            continue;
+        }
+        for(const auto &neighbour : _graph.at(current)){
+            if(prev.count(neighbour) == 0){
+                prev[neighbour] = current;
+                q.push(neighbour);
             }
         }
     }
     for(const auto &customer : customers){
-    
-	if(previous.count(customer) != 0){
-	
-	    string prevC = previous[customer];
-	    if(prevC != customer){
-		res[customer].push_front(customer);
-	    }
-	    while(depots.count(prevC) == 0){
-	    
-		res[customer].push_front(prevC);
-		prevC = previous[prevC];
-	    }
-	    res[customer].push_front(prevC);
-	}
-	else{
-	    res[customer];
-	}
+        if(prev.count(customer) != 0){
+            string prevCustomer = prev[customer];
+
+            if(prevCustomer != customer){
+                res[customer].push_front(customer);
+            }
+
+            while(depots.count(prevCustomer) == 0){
+                res[customer].push_front(prevCustomer);
+                prevCustomer = prev[prevCustomer];
+            }
+            res[customer].push_front(prevCustomer);
+
+        }
+        else{
+            res[customer];
+        }
     }
     return res;
-    
 }
 
 int main ()
@@ -118,4 +116,3 @@ int main ()
 
     return EXIT_SUCCESS;
 }
-
